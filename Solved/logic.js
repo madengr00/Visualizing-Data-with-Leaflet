@@ -1,9 +1,12 @@
 // Store our API endpoint inside queryUrl
 // M4.5+Earthquakes
 var earthquakeUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
-
+console.log(earthquakeUrl);
 var tectonicUrl = 'PB2002_boundaries.json';
 console.log(tectonicUrl);
+
+var volcanoUrl = 'harvard_glb_volc_geojson.json';
+console.log(volcanoUrl);
 
 // Perform a GET request to the query URL
 d3.json(earthquakeUrl, function(earthquakeData) {
@@ -36,14 +39,30 @@ d3.json(earthquakeUrl, function(earthquakeData) {
         "color": "orange",
         "fillOpacity":0 // diabled orange background color inside
     }
-    console.log(faultFeatures)
     var faultLine = L.geoJSON(faultFeatures, {
       style: function(feature){
         return style
         }
     })
-    createMap(earthquakes, faultLine)
-  })  
+    // createMap(earthquakes, faultLine)
+  // });
+
+    d3.json(volcanoUrl, function(volcanoData){
+      console.log(volcanoData.features)
+      // Run the onEachFeature function once for each piece of data in the array
+      var volcanoes = L.geoJSON(volcanoData, {
+        pointToLayer: function (geoJsonPoint, latlng) {
+          return L.marker(latlng, {
+                          icon: myIcon
+           });
+        },
+        onEachFeature: onEachFeature
+      })
+      createMap(earthquakes, faultLine, volcanoes)
+    
+    })
+  });
+  
 });
 
 
@@ -64,6 +83,14 @@ function getColor(d) {
           d > 1 ? '#ff8080' :
                   '#ffb3b3' ;
 }
+
+// define myIcon
+var myIcon = L.icon({
+  iconUrl: 'Volcano-595b40b65ba036ed117d35f9.svg',
+  iconSize: [19, 47.5],
+  iconAnchor: [11, 47],
+  popupAnchor: [-1.5, -38],
+});
 
 // Define satellite, streetmap and darkmap layers
 var streetmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
@@ -89,7 +116,7 @@ var satellite = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.pn
 });
 
   
-function createMap(earthquakes, faultLine) {
+function createMap(earthquakes, faultLine, volcanoes) {
 
   // Define a baseMaps object to hold our base layers
   var baseMaps = {
@@ -101,7 +128,8 @@ function createMap(earthquakes, faultLine) {
   // Create overlay object to hold our overlay layer
   var overlayMaps = {
     "Earthquakes": earthquakes,
-    "Fault Lines": faultLine
+    "Fault Lines": faultLine,
+    "Volcanoes": volcanoes
   };
 
   // Create map, giving it the streetmap and earthquakes layers to display on load
@@ -110,7 +138,7 @@ function createMap(earthquakes, faultLine) {
       37.09, -95.71
     ],
     zoom: 4,
-    layers: [streetmap, earthquakes, faultLine]
+    layers: [streetmap, earthquakes, faultLine,volcanoes]
   });
 
   
